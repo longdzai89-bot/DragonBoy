@@ -31,13 +31,10 @@ jobs:
             -O /tmp/cmdline-tools.zip
           unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-raw
           mv /tmp/cmdline-tools-raw/cmdline-tools $SDK_DIR/cmdline-tools/latest
-
           echo "ANDROID_HOME=$SDK_DIR" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
           echo "$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$SDK_DIR/platform-tools" >> $GITHUB_PATH
-
-          # Viết local.properties ngay trong cùng bước - SDK_DIR đã có
           echo "sdk.dir=$SDK_DIR" > local.properties
           cat local.properties
 
@@ -56,21 +53,22 @@ jobs:
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.4/bin" >> $GITHUB_PATH
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: gradle-
-
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace --no-daemon
+        run: |
+          gradle assembleDebug --no-daemon 2>&1 | tee /tmp/build.log
+          exit ${PIPESTATUS[0]}
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
+      - name: Show build errors if failed
+        if: failure()
+        run: |
+          echo "=== BUILD ERRORS ==="
+          grep -E "error:|warning:|FAILED" /tmp/build.log | head -50
+
       - name: Build Release APK (unsigned)
-        run: gradle assembleRelease --stacktrace --no-daemon
+        run: gradle assembleRelease --no-daemon
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
