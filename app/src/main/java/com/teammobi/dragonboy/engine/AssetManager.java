@@ -79,7 +79,7 @@ public class AssetManager {
             is.close();
             if (sheet == null) return;
 
-            int sheetFrames = sheet.getWidth() / (sheet.getWidth() / frames);
+
             int actualFW = sheet.getWidth() / frames;
 
             for (int i = 0; i < frames; i++) {
