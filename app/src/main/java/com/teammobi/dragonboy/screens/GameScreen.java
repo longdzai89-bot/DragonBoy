@@ -21,7 +21,6 @@ import com.teammobi.dragonboy.utils.HUD;
 import com.teammobi.dragonboy.utils.LevelBuilder;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class GameScreen implements Screen {

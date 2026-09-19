@@ -8,7 +8,6 @@ import android.view.SurfaceView;
 
 import com.teammobi.dragonboy.engine.GameEngine;
 import com.teammobi.dragonboy.engine.InputHandler;
-import com.teammobi.dragonboy.screens.MenuScreen;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
