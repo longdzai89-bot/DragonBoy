@@ -17,27 +17,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Download gradle-wrapper.jar
+      - name: Get gradle-wrapper.jar from distribution
         run: |
+          GRADLE_VERSION=8.4
           mkdir -p gradle/wrapper
-          curl -fsSL \
-            "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
-            -o gradle/wrapper/gradle-wrapper.jar || \
-          mvn dependency:get \
-            -Dartifact=org.gradle:gradle-wrapper:8.4 \
-            -Ddest=gradle/wrapper/gradle-wrapper.jar 2>/dev/null || \
-          wget -q \
-            "https://services.gradle.org/distributions/gradle-8.4-bin.zip" \
-            -O /tmp/gradle-dist.zip && \
-          unzip -p /tmp/gradle-dist.zip "gradle-8.4/lib/gradle-wrapper.jar" \
-            > gradle/wrapper/gradle-wrapper.jar
-          echo "Wrapper jar size: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
+          wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
+            -O /tmp/gradle-dist.zip
+          unzip /tmp/gradle-dist.zip -d /tmp/gradle-extracted
+          find /tmp/gradle-extracted -name "gradle-wrapper*.jar" | head -1 | \
+            xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
+          ls -la gradle/wrapper/gradle-wrapper.jar
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -99,13 +93,3 @@ jobs:
           name: DragonBoy-release
           path: app/build/outputs/apk/release/app-release-unsigned.apk
           retention-days: 30
-
-      - name: Create GitHub Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/release/app-release-unsigned.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
