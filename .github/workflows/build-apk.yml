@@ -22,19 +22,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Get gradle-wrapper.jar from distribution
+      - name: Install Gradle 8.4
         run: |
-          GRADLE_VERSION=8.4
-          mkdir -p gradle/wrapper
-          wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
-            -O /tmp/gradle-dist.zip
-          unzip /tmp/gradle-dist.zip -d /tmp/gradle-extracted
-          find /tmp/gradle-extracted -name "gradle-wrapper*.jar" | head -1 | \
-            xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
-          ls -la gradle/wrapper/gradle-wrapper.jar
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip \
+            -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.4/bin" >> $GITHUB_PATH
 
       - name: Install Android SDK cmdline-tools
         run: |
@@ -62,20 +55,18 @@ jobs:
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: gradle-
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace --no-daemon
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
       - name: Build Release APK (unsigned)
-        run: ./gradlew assembleRelease --stacktrace
+        run: gradle assembleRelease --stacktrace --no-daemon
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
