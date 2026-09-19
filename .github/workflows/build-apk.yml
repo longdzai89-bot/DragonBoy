@@ -22,33 +22,32 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Android SDK cmdline-tools
+      - name: Install Android SDK & write local.properties
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
+          SDK_DIR="$HOME/android-sdk"
+          mkdir -p $SDK_DIR/cmdline-tools
           wget -q \
             https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
             -O /tmp/cmdline-tools.zip
           unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-raw
-          mv /tmp/cmdline-tools-raw/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          mv /tmp/cmdline-tools-raw/cmdline-tools $SDK_DIR/cmdline-tools/latest
+
+          echo "ANDROID_HOME=$SDK_DIR" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
+          echo "$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$SDK_DIR/platform-tools" >> $GITHUB_PATH
+
+          # Viết local.properties ngay trong cùng bước - SDK_DIR đã có
+          echo "sdk.dir=$SDK_DIR" > local.properties
+          cat local.properties
 
       - name: Accept licenses & install SDK components
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager \
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0"
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-
-      - name: Write local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
       - name: Install Gradle 8.4
         run: |
